@@ -8,6 +8,17 @@
   color: #111827;
 }
 
+#hp {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  height: 0 !important;
+  width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 .page{
