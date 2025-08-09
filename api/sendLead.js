@@ -15,7 +15,6 @@ module.exports = async (req, res) => {
       });
       body = raw ? JSON.parse(raw) : {};
     } catch (err) {
-      console.error('Invalid JSON:', err);
       return res.status(400).json({ error: 'Invalid JSON' });
     }
   }
@@ -26,7 +25,6 @@ module.exports = async (req, res) => {
 
   // Honeypot spam block
   if (honeypot) {
-    console.log('Honeypot triggered — spam blocked');
     return res.status(200).json({ ok: true });
   }
 
@@ -37,25 +35,12 @@ module.exports = async (req, res) => {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-  // --- Debug: log all IP-related headers ---
-  console.log('--- IP Debug Info ---');
-  console.log('x-real-ip:', req.headers['x-real-ip']);
-  console.log('x-forwarded-for:', req.headers['x-forwarded-for']);
-  console.log('remoteAddress:', req.connection?.remoteAddress);
-  console.log('socket.remoteAddress:', req.socket?.remoteAddress);
-  console.log('----------------------');
-
-  // Improved IP detection
+  // Finalized IP detection for Vercel
   const getClientIp = () => {
-    let ip = req.headers['x-real-ip'];
-    if (!ip && req.headers['x-forwarded-for']) {
-      ip = req.headers['x-forwarded-for'].split(',')[0].trim();
-    }
-    if (!ip) {
-      ip = req.connection?.remoteAddress || req.socket?.remoteAddress || 'Unknown';
-    }
+    let ip = req.headers['x-real-ip'] ||
+             (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : '');
     if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
-    return ip;
+    return ip || 'Unknown';
   };
   const ip = getClientIp();
 
@@ -63,7 +48,7 @@ module.exports = async (req, res) => {
   const isMobile = /mobile/i.test(userAgent);
   const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
-  // --- Location lookup with timeout ---
+  // Location lookup with timeout
   const fetchLocation = async () => {
     try {
       const res = await fetch(`https://ipapi.co/${ip}/json/`);
@@ -73,9 +58,7 @@ module.exports = async (req, res) => {
           return `${json.city}, ${json.region}, ${json.country_name}`;
         }
       }
-    } catch (err) {
-      console.error('Location lookup failed:', err);
-    }
+    } catch {}
     return 'Unknown';
   };
 
@@ -107,13 +90,11 @@ module.exports = async (req, res) => {
 
     const tgJson = await tgRes.json();
     if (!tgJson.ok) {
-      console.error('Telegram API error:', tgJson);
       return res.status(502).json({ error: 'Telegram API error', detail: tgJson });
     }
 
     return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error('Telegram request failed:', err);
     return res.status(500).json({ error: 'Request failed', detail: err.message });
   }
 };
