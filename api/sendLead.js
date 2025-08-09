@@ -37,7 +37,15 @@ module.exports = async (req, res) => {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-  // --- Improved IP detection for Vercel/CDN ---
+  // --- Debug: log all IP-related headers ---
+  console.log('--- IP Debug Info ---');
+  console.log('x-real-ip:', req.headers['x-real-ip']);
+  console.log('x-forwarded-for:', req.headers['x-forwarded-for']);
+  console.log('remoteAddress:', req.connection?.remoteAddress);
+  console.log('socket.remoteAddress:', req.socket?.remoteAddress);
+  console.log('----------------------');
+
+  // Improved IP detection
   const getClientIp = () => {
     let ip = req.headers['x-real-ip'];
     if (!ip && req.headers['x-forwarded-for']) {
@@ -46,7 +54,6 @@ module.exports = async (req, res) => {
     if (!ip) {
       ip = req.connection?.remoteAddress || req.socket?.remoteAddress || 'Unknown';
     }
-    // Remove IPv6 prefix if present
     if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
     return ip;
   };
@@ -74,7 +81,7 @@ module.exports = async (req, res) => {
 
   const location = await Promise.race([
     fetchLocation(),
-    new Promise((resolve) => setTimeout(() => resolve('Unknown'), 1500)) // 1.5s timeout
+    new Promise((resolve) => setTimeout(() => resolve('Unknown'), 1500))
   ]);
 
   // Escape HTML for Telegram
