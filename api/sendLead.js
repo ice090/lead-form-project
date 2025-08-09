@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
         req.on('error', (err) => reject(err));
       });
       body = raw ? JSON.parse(raw) : {};
-    } catch (err) {
+    } catch {
       return res.status(400).json({ error: 'Invalid JSON' });
     }
   }
@@ -23,9 +23,8 @@ module.exports = async (req, res) => {
   const email = (body.email || '').trim();
   const honeypot = (body.hp || '').trim();
 
-  // Honeypot spam block
   if (honeypot) {
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true }); // spam blocked
   }
 
   if (!name || !email) {
@@ -35,37 +34,46 @@ module.exports = async (req, res) => {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-  // Finalized IP detection for Vercel
+  // --- Improved IP detection ---
   const getClientIp = () => {
-    let ip = req.headers['x-real-ip'] ||
-             (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : '');
+    let ip = req.headers['x-real-ip'];
+    if (!ip && req.headers['x-forwarded-for']) {
+      ip = req.headers['x-forwarded-for'].split(',')[0].trim();
+    }
+    if (!ip) {
+      ip = req.connection?.remoteAddress || req.socket?.remoteAddress || 'Unknown';
+    }
     if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
     return ip || 'Unknown';
   };
   const ip = getClientIp();
 
   const userAgent = req.headers['user-agent'] || 'Unknown';
-  const isMobile = /mobile/i.test(userAgent);
-  const deviceType = isMobile ? 'Mobile' : 'Desktop';
+  const deviceType = /mobile/i.test(userAgent) ? 'Mobile' : 'Desktop';
 
-  // Location lookup with timeout
-  const fetchLocation = async () => {
+  // --- Location & ISP lookup ---
+  let location = 'Unknown';
+  let isp = 'Unknown';
+  if (ip && ip !== '127.0.0.1' && ip !== 'Unknown') {
     try {
-      const res = await fetch(`https://ipapi.co/${ip}/json/`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.city && json.country_name) {
-          return `${json.city}, ${json.region}, ${json.country_name}`;
+      const locRes = await Promise.race([
+        fetch(`https://ipapi.co/${ip}/json/`),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500))
+      ]);
+
+      if (locRes && locRes.ok) {
+        const locJson = await locRes.json();
+        if (locJson.city && locJson.country_name) {
+          location = `${locJson.city}, ${locJson.region}, ${locJson.country_name}`;
+        }
+        if (locJson.org) {
+          isp = locJson.org;
         }
       }
-    } catch {}
-    return 'Unknown';
-  };
-
-  const location = await Promise.race([
-    fetchLocation(),
-    new Promise((resolve) => setTimeout(() => resolve('Unknown'), 1500))
-  ]);
+    } catch (err) {
+      console.error('Location lookup failed:', err.message);
+    }
+  }
 
   // Escape HTML for Telegram
   const esc = (s) =>
@@ -77,6 +85,7 @@ module.exports = async (req, res) => {
     `<b>Email:</b> ${esc(email)}\n` +
     `<b>IP:</b> ${esc(ip)}\n` +
     `<b>Location:</b> ${esc(location)}\n` +
+    `<b>ISP/Org:</b> ${esc(isp)}\n` +
     `<b>Device:</b> ${esc(deviceType)}\n` +
     `<b>User Agent:</b> ${esc(userAgent)}\n` +
     `<b>Time:</b> ${new Date().toISOString()}`;
