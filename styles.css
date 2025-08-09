@@ -1,13 +1,99 @@
-:root{
-  --blue:#1877f2;
-  --card-bg:#ffffff;
-  --muted:#6b7280;
-  --radius:10px;
-  --shadow: 0 6px 20px rgba(15,23,42,0.12);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  color: #111827;
+body {
+  margin: 0;
+  background-color: #f0f2f5;
+  font-family: Helvetica, Arial, sans-serif;
 }
 
+.fb-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.fb-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 60px;
+}
+
+.fb-left {
+  max-width: 400px;
+}
+
+.fb-logo {
+  color: #1877f2;
+  font-size: 56px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.fb-tagline {
+  font-size: 20px;
+  line-height: 28px;
+  color: #1c1e21;
+}
+
+.fb-right {
+  width: 396px;
+}
+
+.fb-card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.fb-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.fb-card input {
+  font-size: 17px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid #dddfe2;
+  border-radius: 6px;
+  outline: none;
+}
+
+.fb-card input:focus {
+  border-color: #1877f2;
+  box-shadow: 0 0 0 2px #e7f3ff;
+}
+
+.fb-card button {
+  background-color: #1877f2;
+  border: none;
+  color: white;
+  padding: 14px 16px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.fb-card button:hover {
+  background-color: #166fe5;
+}
+
+.fb-footer-text {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #606770;
+}
+
+.status {
+  font-size: 14px;
+  color: #606770;
+  margin-top: 8px;
+}
+
+/* Honeypot field hidden */
 #hp {
   position: absolute !important;
   left: -9999px !important;
@@ -18,72 +104,13 @@
   pointer-events: none !important;
 }
 
-
-*{box-sizing:border-box}
-html,body{height:100%;margin:0}
-.page{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: linear-gradient(180deg,#f7f9fc 0%, #eef2ff 100%);
-  padding:24px;
+/* Mobile responsiveness */
+@media (max-width: 900px) {
+  .fb-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  .fb-left {
+    max-width: 300px;
+  }
 }
-
-.card{
-  width:100%;
-  max-width:420px;
-  border-radius:14px;
-  background:var(--card-bg);
-  box-shadow:var(--shadow);
-  overflow:hidden;
-  border:1px solid rgba(0,0,0,0.04);
-}
-
-.brand{
-  background:var(--blue);
-  color:white;
-  padding:24px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.brand h1{margin:0;font-size:20px;letter-spacing:0.4px}
-
-.form{padding:22px}
-.form h2{margin:0 0 6px 0;font-size:20px}
-.sub{margin:0 0 14px 0;color:var(--muted);font-size:13px}
-
-.field{display:block;margin-bottom:12px}
-.field input{
-  width:100%;
-  padding:12px 14px;
-  border-radius:8px;
-  border:1px solid #e6eefc;
-  background:#fbfdff;
-  font-size:15px;
-  outline:none;
-  transition:box-shadow .12s, border-color .12s;
-}
-.field input:focus{border-color:rgba(24,119,242,0.9); box-shadow:0 6px 18px rgba(24,119,242,0.08)}
-
-.btn{
-  width:100%;
-  padding:12px 14px;
-  border-radius:10px;
-  border: none;
-  background:var(--blue);
-  color:white;
-  font-weight:600;
-  font-size:15px;
-  cursor:pointer;
-  margin-top:6px;
-  box-shadow: 0 6px 12px rgba(24,119,242,0.18);
-}
-
-.btn:disabled{opacity:0.7;cursor:not-allowed}
-.status{margin-top:10px;font-size:13px;color:var(--muted)}
-
-.hidden{position:absolute;left:-9999px;opacity:0;height:0;width:0;border:0}
-@media (max-width:420px){.card{margin:0 12px}}
