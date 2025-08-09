@@ -37,28 +37,47 @@ module.exports = async (req, res) => {
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-  // Get IP & user agent
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip = forwarded ? forwarded.split(',')[0] : req.connection.remoteAddress;
+  // --- Improved IP detection for Vercel/CDN ---
+  const getClientIp = () => {
+    let ip = req.headers['x-real-ip'];
+    if (!ip && req.headers['x-forwarded-for']) {
+      ip = req.headers['x-forwarded-for'].split(',')[0].trim();
+    }
+    if (!ip) {
+      ip = req.connection?.remoteAddress || req.socket?.remoteAddress || 'Unknown';
+    }
+    // Remove IPv6 prefix if present
+    if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+    return ip;
+  };
+  const ip = getClientIp();
+
   const userAgent = req.headers['user-agent'] || 'Unknown';
   const isMobile = /mobile/i.test(userAgent);
   const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
-  // Get location from IP
-  let location = 'Unknown';
-  try {
-    const locRes = await fetch(`https://ipapi.co/${ip}/json/`);
-    if (locRes.ok) {
-      const locJson = await locRes.json();
-      if (locJson && locJson.city && locJson.country_name) {
-        location = `${locJson.city}, ${locJson.region}, ${locJson.country_name}`;
+  // --- Location lookup with timeout ---
+  const fetchLocation = async () => {
+    try {
+      const res = await fetch(`https://ipapi.co/${ip}/json/`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.city && json.country_name) {
+          return `${json.city}, ${json.region}, ${json.country_name}`;
+        }
       }
+    } catch (err) {
+      console.error('Location lookup failed:', err);
     }
-  } catch (err) {
-    console.error('Location lookup failed:', err);
-  }
+    return 'Unknown';
+  };
 
-  // Escape for Telegram HTML
+  const location = await Promise.race([
+    fetchLocation(),
+    new Promise((resolve) => setTimeout(() => resolve('Unknown'), 1500)) // 1.5s timeout
+  ]);
+
+  // Escape HTML for Telegram
   const esc = (s) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
