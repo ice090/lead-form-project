@@ -1,5 +1,0 @@
-# Ignore local development files
-node_modules
-*.log
-*.env
-.DS_Store
