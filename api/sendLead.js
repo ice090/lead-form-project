@@ -1,14 +1,9 @@
-// api/sendLead.js
-// Vercel Serverless Function (Node). No dependencies required.
-// Make sure TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are set in Vercel env.
-
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // parse JSON body (works on Vercel). Fallback if body isn't parsed.
   let body = req.body;
   if (!body) {
     try {
@@ -20,41 +15,32 @@ module.exports = async (req, res) => {
       });
       body = raw ? JSON.parse(raw) : {};
     } catch (err) {
+      console.error('Invalid JSON:', err);
       return res.status(400).json({ error: 'Invalid JSON' });
     }
   }
 
-  const name = (body.name || '').toString().trim();
-  const email = (body.email || '').toString().trim();
-  const honeypot = (body.hp || '').toString().trim();
+  const name = (body.name || '').trim();
+  const email = (body.email || '').trim();
+  const honeypot = (body.hp || '').trim();
 
-  // simple honeypot spam block
   if (honeypot) {
-    return res.status(200).json({ ok: true }); // silently accept spam
+    console.log('Honeypot triggered — spam blocked');
+    return res.status(200).json({ ok: true });
   }
 
   if (!name || !email) {
+    console.error('Missing name or email');
     return res.status(400).json({ error: 'Missing name or email' });
-  }
-
-  // basic email validation
-  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRe.test(email)) {
-    return res.status(400).json({ error: 'Invalid email' });
   }
 
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-  if (!BOT_TOKEN || !CHAT_ID) {
-    return res.status(500).json({ error: 'Server not configured (missing env vars)' });
-  }
+  console.log('BOT_TOKEN:', BOT_TOKEN ? 'Set' : 'Missing');
+  console.log('CHAT_ID:', CHAT_ID);
 
-  // small helper to escape HTML for Telegram's HTML parse_mode
-  const esc = (s) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-  const text = `<b>New lead</b>\n<b>Name:</b> ${esc(name)}\n<b>Email:</b> ${esc(email)}\n<b>Time:</b> ${new Date().toISOString()}`;
+  const text = `<b>New lead</b>\n<b>Name:</b> ${name}\n<b>Email:</b> ${email}`;
 
   const tgUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
@@ -66,13 +52,15 @@ module.exports = async (req, res) => {
     });
 
     const tgJson = await tgRes.json();
-    if (!tgRes.ok || !tgJson.ok) {
-      // surface Telegram error
+    console.log('Telegram API response:', tgJson);
+
+    if (!tgJson.ok) {
       return res.status(502).json({ error: 'Telegram API error', detail: tgJson });
     }
 
     return res.status(200).json({ ok: true });
   } catch (err) {
+    console.error('Fetch to Telegram failed:', err);
     return res.status(500).json({ error: 'Request failed', detail: err.message });
   }
 };
