@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Get in touch</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <div class="card">
+      <div class="brand">
+        <h1>Connect</h1>
+      </div>
+
+      <form id="leadForm" class="form" autocomplete="off">
+        <h2>Join our list</h2>
+        <p class="sub">Leave your name & email — we'll send updates via Telegram.</p>
+
+        <label class="field">
+          <input id="name" name="name" type="text" placeholder="Full name" required />
+        </label>
+
+        <label class="field">
+          <input id="email" name="email" type="email" placeholder="Email address" required />
+        </label>
+
+        <!-- Honeypot for basic spam protection (invisible to users) -->
+        <input id="hp" name="hp" type="text" autocomplete="off" class="hidden" tabindex="-1" />
+
+        <button id="submitBtn" class="btn" type="submit">Get started</button>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </main>
+
+  <script src="/script.js"></script>
+</body>
+</html>
