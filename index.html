@@ -25,8 +25,10 @@
           <input id="email" name="email" type="email" placeholder="Email address" required />
         </label>
 
-        <!-- Honeypot for basic spam protection (invisible to users) -->
-        <input id="hp" name="hp" type="text" autocomplete="off" class="hidden" tabindex="-1" />
+
+        <!-- Honeypot field - hidden from humans & autofill -->
+<input id="hp" name="hp" type="text" aria-hidden="true" tabindex="-1" autocomplete="off" />
+
 
 
         <button id="submitBtn" class="btn" type="submit">Get started</button>
