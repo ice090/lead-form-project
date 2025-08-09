@@ -51,24 +51,48 @@ module.exports = async (req, res) => {
   const userAgent = req.headers['user-agent'] || 'Unknown';
   const deviceType = /mobile/i.test(userAgent) ? 'Mobile' : 'Desktop';
 
-  // --- Location & ISP lookup ---
+  // --- Location & ISP lookup with fallback ---
   let location = 'Unknown';
   let isp = 'Unknown';
+
+  const getFromIpApiCo = async () => {
+    const res = await fetch(`https://ipapi.co/${ip}/json/`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.city && json.country_name) {
+        location = `${json.city}, ${json.region}, ${json.country_name}`;
+      }
+      if (json.org) {
+        isp = json.org;
+      }
+    }
+  };
+
+  const getFromIpWhoIs = async () => {
+    const res = await fetch(`https://ipwho.is/${ip}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.city && json.country) {
+        location = `${json.city}, ${json.region}, ${json.country}`;
+      }
+      if (json.connection && json.connection.org) {
+        isp = json.connection.org;
+      }
+    }
+  };
+
   if (ip && ip !== '127.0.0.1' && ip !== 'Unknown') {
     try {
-      const locRes = await Promise.race([
-        fetch(`https://ipapi.co/${ip}/json/`),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500))
+      await Promise.race([
+        getFromIpApiCo(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2500))
       ]);
 
-      if (locRes && locRes.ok) {
-        const locJson = await locRes.json();
-        if (locJson.city && locJson.country_name) {
-          location = `${locJson.city}, ${locJson.region}, ${locJson.country_name}`;
-        }
-        if (locJson.org) {
-          isp = locJson.org;
-        }
+      if (location === 'Unknown') {
+        await Promise.race([
+          getFromIpWhoIs(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2500))
+        ]);
       }
     } catch (err) {
       console.error('Location lookup failed:', err.message);
