@@ -1,4 +1,6 @@
 module.exports = async (req, res) => {
+  console.log("Function triggered");
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -24,54 +26,53 @@ module.exports = async (req, res) => {
   const email = (body.email || '').trim();
   const honeypot = (body.hp || '').trim();
 
-  // Honeypot spam block
+  console.log("Form Data:", { name, email, honeypot });
+
   if (honeypot) {
     console.log('Honeypot triggered — spam blocked');
     return res.status(200).json({ ok: true });
   }
 
   if (!name || !email) {
+    console.error('Missing name or email');
     return res.status(400).json({ error: 'Missing name or email' });
   }
 
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-  // Detect IP & user agent
+  console.log("BOT_TOKEN set:", !!BOT_TOKEN, "CHAT_ID:", CHAT_ID);
+
+  // Get IP and user agent
   const forwarded = req.headers['x-forwarded-for'];
   const ip = forwarded ? forwarded.split(',')[0] : req.connection.remoteAddress;
   const userAgent = req.headers['user-agent'] || 'Unknown';
-
-  // Simple device detection
   const isMobile = /mobile/i.test(userAgent);
   const deviceType = isMobile ? 'Mobile' : 'Desktop';
 
-  // Get location via IP API (ipapi.co is free for basic lookups)
+  console.log("IP:", ip, "UA:", userAgent, "Device:", deviceType);
+
+  // Get location
   let location = 'Unknown';
   try {
     const locRes = await fetch(`https://ipapi.co/${ip}/json/`);
-    if (locRes.ok) {
-      const locJson = await locRes.json();
-      if (locJson && locJson.city && locJson.country_name) {
-        location = `${locJson.city}, ${locJson.region}, ${locJson.country_name}`;
-      }
+    const locJson = await locRes.json();
+    console.log("Location API response:", locJson);
+    if (locJson && locJson.city && locJson.country_name) {
+      location = `${locJson.city}, ${locJson.region}, ${locJson.country_name}`;
     }
   } catch (err) {
-    console.error('Location lookup failed:', err);
+    console.error("Location lookup failed:", err);
   }
 
+  // Send to Telegram
   const esc = (s) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const text =
-    `<b>New lead</b>\n` +
-    `<b>Name:</b> ${esc(name)}\n` +
-    `<b>Email:</b> ${esc(email)}\n` +
-    `<b>IP:</b> ${esc(ip)}\n` +
-    `<b>Location:</b> ${esc(location)}\n` +
-    `<b>Device:</b> ${esc(deviceType)}\n` +
-    `<b>User Agent:</b> ${esc(userAgent)}\n` +
-    `<b>Time:</b> ${new Date().toISOString()}`;
+    `<b>New lead</b>\n<b>Name:</b> ${esc(name)}\n<b>Email:</b> ${esc(email)}\n<b>IP:</b> ${esc(ip)}\n<b>Location:</b> ${esc(location)}\n<b>Device:</b> ${esc(deviceType)}\n<b>User Agent:</b> ${esc(userAgent)}\n<b>Time:</b> ${new Date().toISOString()}`;
+
+  console.log("Sending to Telegram:", text);
 
   try {
     const tgRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -81,13 +82,15 @@ module.exports = async (req, res) => {
     });
 
     const tgJson = await tgRes.json();
+    console.log("Telegram API response:", tgJson);
+
     if (!tgJson.ok) {
       return res.status(502).json({ error: 'Telegram API error', detail: tgJson });
     }
 
     return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error('Telegram request failed:', err);
+    console.error("Telegram request failed:", err);
     return res.status(500).json({ error: 'Request failed', detail: err.message });
   }
 };
