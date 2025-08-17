@@ -20,15 +20,15 @@ module.exports = async (req, res) => {
   }
 
   const name = (body.name || '').trim();
-  const email = (body.email || '').trim();
+  const contact = (body.contact || '').trim(); // Can be email or phone
   const honeypot = (body.hp || '').trim();
 
   if (honeypot) {
     return res.status(200).json({ ok: true }); // spam blocked
   }
 
-  if (!name || !email) {
-    return res.status(400).json({ error: 'Missing name or email' });
+  if (!name || !contact) {
+    return res.status(400).json({ error: 'Missing name or contact' });
   }
 
   const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
   const text =
     `<b>New lead</b>\n` +
     `<b>Name:</b> ${esc(name)}\n` +
-    `<b>Email:</b> ${esc(email)}\n` +
+    `<b>Contact:</b> ${esc(contact)}\n` + // flexible field
     `<b>IP:</b> ${esc(ip)}\n` +
     `<b>Location:</b> ${esc(location)}\n` +
     `<b>ISP/Org:</b> ${esc(isp)}\n` +
