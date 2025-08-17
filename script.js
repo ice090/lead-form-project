@@ -7,17 +7,31 @@ function show(msg, ok = true) {
   statusEl.style.color = ok ? '' : '#b91c1c';
 }
 
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidPhone(value) {
+  // Accepts digits, spaces, dashes, parentheses, optional +country code
+  return /^\+?[0-9\s\-()]{7,20}$/.test(value);
+}
+
 form.addEventListener('submit', async (e) => {
-  e.preventDefault(); // Prevent normal form submit
+  e.preventDefault();
 
   show('', true);
 
   const name = document.getElementById('name').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const hp = document.getElementById('hp').value.trim(); // honeypot
+  const contact = document.getElementById('contact').value.trim();
+  const hp = document.getElementById('hp').value.trim();
 
-  if (!name || !email) {
-    show('Please provide both name and email.', false);
+  if (!name || !contact) {
+    show('Please provide both name and contact.', false);
+    return;
+  }
+
+  if (!isValidEmail(contact) && !isValidPhone(contact)) {
+    show('Please enter a valid email or phone number.', false);
     return;
   }
 
@@ -28,7 +42,7 @@ form.addEventListener('submit', async (e) => {
     const res = await fetch('/api/sendLead', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, hp })
+      body: JSON.stringify({ name, contact, hp })
     });
 
     const json = await res.json();
@@ -42,6 +56,6 @@ form.addEventListener('submit', async (e) => {
     show('Network error — please try again.', false);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Get started';
+    btn.textContent = 'Get Started';
   }
 });
